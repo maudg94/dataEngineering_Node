@@ -1,36 +1,61 @@
-var http = require('http');
-var mysql = require('mysql');
-const util = require('util');
+'use strict';
 
-var con = mysql.createConnection({
-    host: "192.168.1.9",
-    user: "user",
-    password: "password",
-    database: "db", 
-    port: "3306"
-  });
+const express = require('express')
+const mysql = require('mysql')
 
-con.connect(function(err) {
-    if (err) throw err;
-    console.log('successfully connected to mysql');
-  });
+// Constants
+const PORT = 3000
+const HOST = `0.0.0.0`
 
-const query = util.promisify(con.query).bind(con);
+// App
+const app = express()
 
-http.createServer(async function (request, response) {
+const db = mysql.createConnection({
+    host: `mysql`,
+    user: `root`,
+    password: `maud`,
+    database: `my-db`,
+})
 
-    await query("UPDATE counterTable SET counter_count = counter_count+1 WHERE counter_id = 1");
-    const userCount = query('SELECT counter_count FROM counterTable WHERE counter_id = 1');
+let response = null
+let hasCreatedDatabase = false
 
-    response.writeHead(200, {'Content-Type': 'text/plain'});
+app.get(`/`, async (req, res) => {
+    response = res
+    if(!hasCreatedDatabase)
+        createDatabaseAndUpdateCounter(response)
+    else
+        updateCounter(response)
+})
 
-    response.write('Hello!\n');
+const createDatabaseAndUpdateCounter = response => {
+    db.query(`DROP TABLE IF EXISTS counter`, (err, result1) => {
+        if(err)
+            console.log(err)
+        else{
+            db.query(`CREATE TABLE IF NOT EXISTS counter (id int NOT NULL PRIMARY KEY AUTO_INCREMENT, number int NOT NULL)`, (err, result2) => {
+                if(err)
+                    console.log(err)
+                else{
+                    hasCreatedDatabase = true
+                    updateCounter(response)
+                }
+            })
+        }
+    })
+}
 
-    response.write(' I have been seen '+userCount+' times!\n');
+const updateCounter = response => {
+    db.query(`INSERT INTO counter(number) VALUES (0)`, (err, results, fields) => {
+        if(err)
+            console.log(err)
+        else{
+            console.log(results)
+            response.send(`Hello to my sample NodeJS app, I have been seen ${results.insertId} times`)
+        }
+    })
+}
 
-    response.end();
-
-}).listen(3000);
-
-
-console.log('Server started run at the http://localhost:8000');
+app.listen(PORT, HOST, () => {
+    console.log(`Running on http://${HOST}:${PORT}`)
+})

@@ -1,23 +1,21 @@
 version: "3"
 services:
     web:
+        restart: unless-stopped
         build: .
         ports: 
             - "3000:3000"
         depends_on:
-            - database
-    database:
-        image: "mysql"
+            - mysql
+    mysql:
+        image: "mysql:latest"
+        command: --default-authentication-plugin=mysql_native_password
         restart: always
         environment:
-            MYSQL_DATABASE: 'db'
-            MYSQL_USER: 'user'
-            MYSQL_PASSWORD: 'password'
-            MYSQL_ROOT_PASSWORD: 'password'
+            MYSQL_ROOT_PASSWORD: 'maud'
+            MYSQL_DATABASE: 'my-db'
         ports:
-            - 3306:3306
-        expose: 
-            - 3306 
+            - "3306:3306"
         volumes: 
             - my-db:/mysql
 volumes: 
