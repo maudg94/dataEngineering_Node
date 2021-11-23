@@ -15,9 +15,9 @@ services:
             MYSQL_PASSWORD: 'password'
             MYSQL_ROOT_PASSWORD: 'password'
         ports:
-            - 8080:8080
+            - 3306:3306
         expose: 
-            - 8080 
+            - 3306 
         volumes: 
             - my-db:/mysql
 volumes: 
